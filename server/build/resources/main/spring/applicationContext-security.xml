@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-3.2.xsd  
+           http://www.springframework.org/schema/security
+           http://www.springframework.org/schema/security/spring-security-3.2.xsd">
+    <!--
+        The <http> element is responsible for creating a FilterChainProxy and
+        the filter beans which it uses. Common issues like incorrect filter
+        ordering are no longer an issue as the filter positions are
+        predefined.
+    -->
+
+    <!-- 未控制权限的内容 -->
+    <beans:bean id="filterSecurityInterceptor"
+                class="org.springframework.security.web.access.intercept.FilterSecurityInterceptor">
+        <beans:property name="authenticationManager" ref="authenticationManager"/>
+        <beans:property name="accessDecisionManager" ref="accessDecisionManager"/>
+        <beans:property name="securityMetadataSource" ref="customSecurityMetadataSource"/>
+    </beans:bean>
+
+    <beans:bean id="customSecurityMetadataSource"
+                class="com.idevelope.imy.service.security.InvocationSecurityMetadataSource"/>
+
+    <beans:bean id="customAccessDecisionManager"
+                class="com.idevelope.imy.service.security.SecAccessDecisionManager"/>
+
+    <!--	<beans:bean id="switchUserProcessingFilter" class="org.springframework.security.web.authentication.switchuser.SwitchUserFilter">-->
+    <!--	    <property name="userDetailsService" ref="userDetailsService" />-->
+    <!--	    <property name="switchUserUrl" value="/admin/switch" />-->
+    <!--	    <property name="exitUserUrl" value="/admin/switch/exit" />-->
+    <!--	    <property name="targetUrl" value="/index.do" />-->
+    <!--	</beans:bean>-->
+    <!-- -->
+    <http auto-config="true">
+        <access-denied-handler error-page="/errors/403/403.html"/>
+        <form-login login-page="/login.do?logout=1"
+                    authentication-success-handler-ref="authenticationSuccessHandler"
+                    authentication-failure-url="/login.do?error=1"/>
+        <remember-me/>
+        <logout logout-url="/j_spring_security_logout" success-handler-ref="userLogoutHandler"
+                delete-cookies="JSESSIONID"/>
+
+        <!-- 无权限访问配置session-authentication-error-url -->
+        <session-management>
+            <concurrency-control max-sessions="10" expired-url="/session/expired"/>
+        </session-management>
+
+        <custom-filter before="FILTER_SECURITY_INTERCEPTOR" ref="filterSecurityInterceptor"/>
+        <custom-filter ref="switchUserProcessingFilter" position="SWITCH_USER_FILTER"/>
+    </http>
+
+    <beans:bean id="authenticationSuccessHandler"
+                class="com.idevelope.imy.service.security.AuthenticationSuccessProcesser">
+        <beans:property name="defaultTargetUrl" value="/index"></beans:property>
+        <beans:property name="alwaysUseDefaultTargetUrl" value="true"></beans:property>
+    </beans:bean>
+
+    <beans:bean id="switchUserProcessingFilter" class="com.idevelope.imy.service.security.SwitchUserProcessor">
+        <beans:property name="userDetailsService" ref="userDetailsService"/>
+        <beans:property name="usernameParameter" value="account"/>
+        <beans:property name="targetUrl" value="/index"/>
+        <beans:property name="switchUserUrl" value="/switch"/>
+        <beans:property name="exitUserUrl" value="/switch/exit"/>
+    </beans:bean>
+
+    <beans:bean id="accessDecisionManager"
+                class="org.springframework.security.access.vote.AffirmativeBased">
+        <beans:property name="decisionVoters">
+            <beans:list>
+                <beans:bean class="org.springframework.security.access.vote.RoleVoter">
+                    <beans:property name="rolePrefix" value="ROLE_"/>
+                </beans:bean>
+                <beans:bean
+                        class="org.springframework.security.access.vote.AuthenticatedVoter"/>
+            </beans:list>
+        </beans:property>
+    </beans:bean>
+
+    <authentication-manager alias="authenticationManager">
+        <authentication-provider user-service-ref="userDetailsService">
+            <password-encoder hash="md5"/>
+        </authentication-provider>
+    </authentication-manager>
+
+    <beans:bean id="userDetailsService"
+                class="com.idevelope.imy.service.security.UserDetailServiceImpl"/>
+
+    <beans:bean id="userLogoutHandler"
+                class="com.idevelope.imy.service.security.UserLogoutHandler"/>
+</beans:beans>

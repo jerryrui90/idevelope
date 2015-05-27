@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+    http://www.springframework.org/schema/context 
+    http://www.springframework.org/schema/context/spring-context-3.2.xsd
+    http://www.springframework.org/schema/mvc
+    http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd">
+
+    <context:component-scan
+            base-package="com.idevelope.imy.web"/>
+    <mvc:annotation-driven/>
+    <mvc:resources location="/style/**" mapping="/style/**"/>
+    <mvc:resources location="/js/**" mapping="/js/**"/>
+
+    <!--  对模型视图名称的解析，即在模型视图名称添加前后缀 -->
+    <bean
+            class="org.springframework.web.servlet.view.InternalResourceViewResolver"
+            p:prefix="/WEB-INF/jsp/" p:suffix=".jsp"/>
+
+    <!-- 本地化设置,国际化操作 拦截器 必需配置，可以和其它国际化方式通用 -->
+    <bean id="localeChangeInterceptor"
+          class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor">
+        <property name="paramName" value="locale"/>
+    </bean>
+
+    <!-- 基于Session的国际化配置 -->
+    <bean id="localeResolver"
+          class="org.springframework.web.servlet.i18n.SessionLocaleResolver"/>
+
+    <!-- 将拦截器注入到你的DefaultAnnotationHandlerMapping中 -->
+    <bean
+            class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping">
+        <property name="interceptors">
+            <list>
+                <ref bean="localeChangeInterceptor"/>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="viewResolver"
+          class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix">
+            <value>/</value>
+        </property>
+        <property name="suffix">
+            <value>.jsp</value>
+        </property>
+        <property name="viewNames" value="front*"></property>
+    </bean>
+    <!--  <bean id="viewResolver1"
+            class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+          <property name="prefix">
+              <value>/WEB-INF/jsp/</value>
+          </property>
+          <property name="suffix">
+              <value>.jsp</value>
+          </property>
+          <property name="order" value="2"></property>
+      </bean>
+  -->
+    <!--springMVC异常处理-->
+    <!--    <bean id="exceptionResolver"
+              class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+            <property name="exceptionMappings">
+                <props>
+                    <prop key="java.lang.Exception">commonException</prop>
+                    <prop key="java.lang.ArithmeticException">freindlyError</prop>
+                    <prop key="java.sql.SQLException">freindlyError</prop>
+                    <prop key="java.lang.RuntimeException">freindlyError</prop>
+                </props>
+            </property>
+        </bean>-->
+</beans>
